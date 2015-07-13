@@ -1,6 +1,8 @@
 #ifndef     _LIBP7_H_
 #define     _LIBP7_H_
 
+#include    <p7impl.h>
+
 void p7_coro_yield(void);
 void p7_coro_create(void (*entry)(void *), void *arg, size_t stack_size);
 int p7_iowrap_(int fd, int rdwr);
