@@ -288,19 +288,24 @@ struct p7_timer_event *p7_timer_event_new_(unsigned long long dt, unsigned from,
 
 static
 void p7_timer_event_del_(struct p7_timer_event *ev) {
+    if (ev->hook.dtor != NULL)
+        ev->hook.dtor(ev->hook.arg, ev->hook.func);
     free(ev);
 }
 
 static
 struct p7_timer_event *p7_timer_event_new(unsigned long long dt, unsigned from, struct p7_coro *coro, struct p7_cond_event *cond) {
-    // TODO implementation
     return p7_timer_event_new_(dt, from, coro, cond);
 }
 
 static
 void p7_timer_event_del(struct p7_timer_event *ev) {
-    // TODO implementation
     p7_timer_event_del_(ev);
+}
+
+static
+void p7_timer_event_hook(struct p7_timer_event *ev, void (*func)(void *), void *arg, void (*dtor)(void *, void (*)(void *))) {
+    (ev->hook.arg = arg), (ev->hook.func = func), (ev->hook.dtor = dtor);
 }
 
 static
@@ -378,8 +383,7 @@ void *sched_loop(void *arg) {
         struct p7_timer_event *ev_earliest = timer_peek_earliest(self->sched_info.timer_heap);
         unsigned long long tval_before = get_timeval_current();
         if (ev_earliest != NULL) {
-            // XXX NO DEED NO DESU
-            if (ev_earliest->tval >= tval_before) {
+            if ((ev_earliest->tval > tval_before) && (ep_timeout < 0)) {
                 ep_timeout = ev_earliest->tval - tval_before;
             }
         }
@@ -394,7 +398,10 @@ void *sched_loop(void *arg) {
                 break;
             else {
                 struct p7_timer_event *ev_timer_expired = timer_extract_earliest(self->sched_info.timer_heap);
-                list_add_head(&(ev_timer_expired->coro->lctl), &(self->sched_info.coro_queue));
+                if (ev_timer_expired->hook.func != NULL)
+                    ev_timer_expired->hook.func(ev_timer_expired->hook.arg);
+                if (ev_timer_expired->coro != NULL)
+                    list_add_head(&(ev_timer_expired->coro->lctl), &(self->sched_info.coro_queue));
                 if (ev_timer_expired->condref != NULL) {
                     // TODO condref
                 }
@@ -408,10 +415,10 @@ void *sched_loop(void *arg) {
             if (kwrap->fd != self->iomon_info.condpipe[0]) {
                 // XXX be it slower when active connections are many.
                 //     pray that we WILL hit and evade. @RHTS
-                epoll_ctl(self->iomon_info.epfd, EPOLL_CTL_DEL, kwrap->fd, NULL);
-                list_add_head(&(kwrap->coro->lctl), &(self->sched_info.coro_queue));
-                //free(kwrap);
-                p7_waitk_delete(kwrap);
+                if (epoll_ctl(self->iomon_info.epfd, EPOLL_CTL_DEL, kwrap->fd, NULL) != -1) {
+                    list_add_head(&(kwrap->coro->lctl), &(self->sched_info.coro_queue));
+                    p7_waitk_delete(kwrap);
+                }
             } else {
                 // XXX just a stub. need dispatching for both remote creating requests & conditional locks.
                 char sink[128];
@@ -485,6 +492,18 @@ void coro_create_request(void (*entry)(void *), void *arg, size_t stack_size) {
 }
 
 // APIs begin here
+
+void p7_timed_event(unsigned long long dt, void (*func)(void *), void *arg, void (*dtor)(void *, void (*)(void *))) {
+    struct p7_timer_event *ev = p7_timer_event_new_(dt, self_view->carrier_id, NULL, NULL);
+    p7_timer_event_hook(ev, func, arg, dtor);
+    timer_add_event(ev, self_view->sched_info.timer_heap);
+}
+
+void p7_timed_event_assoc(unsigned long long dt, void (*func)(void *), void *arg, void (*dtor)(void *, void (*)(void *))) {
+    struct p7_timer_event *ev = p7_timer_event_new_(dt, self_view->carrier_id, self_view->sched_info.running, NULL);
+    p7_timer_event_hook(ev, func, arg, dtor);
+    timer_add_event(ev, self_view->sched_info.timer_heap);
+}
 
 void p7_coro_yield(void) {
     struct p7_carrier *self = self_view;

@@ -71,6 +71,11 @@ struct p7_timer_event {
     unsigned from;
     struct p7_coro *coro;
     struct p7_cond_event *condref;
+    struct {
+        void *arg;
+        void (*func)(void *);
+        void (*dtor)(void *, void (*)(void *));
+    } hook;
 };
 
 // NOTE cond events are restricted to the local carrier.

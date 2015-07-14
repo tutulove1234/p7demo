@@ -5,6 +5,7 @@
 
 void p7_coro_yield(void);
 void p7_coro_create(void (*entry)(void *), void *arg, size_t stack_size);
+void p7_timed_event(unsigned long long dt, void (*func)(void *), void *arg, void (*dtor)(void *, void (*)(void *)));
 int p7_iowrap_(int fd, int rdwr);
 int p7_init(unsigned nthreads);
 

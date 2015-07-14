@@ -1,3 +1,4 @@
+#include    <stdio.h>
 #include    <util_heap.h>
 
 
@@ -55,9 +56,11 @@ void heap_insert(void *e, struct p7_minheap *h) {
     unsigned j;
     void *tmp_entry;
     if (h->heap_curr >= h->heap_size) {
-        void **tmp_entries = (void **) realloc(h->heap_entries, sizeof(void *) * h->heap_size * 1.5);
+        __auto_type basesize = sizeof(void *) * h->heap_size;
+        void **tmp_entries = (void **) realloc(h->heap_entries, basesize * 2);
         if (tmp_entries != NULL) {
             h->heap_entries = tmp_entries;
+            h->heap_size *= 2;
         } else {
             return;
         }
