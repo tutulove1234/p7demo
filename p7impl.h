@@ -115,6 +115,7 @@ struct p7_carrier {
 
 #define     P7_IOMODE_READ      1
 #define     P7_IOMODE_WRITE     2
+#define     P7_IOMODE_ERROR     8
 #define     P7_IOCTL_ET         4
 
 #define     P7_RQ_POOL_CAP      128

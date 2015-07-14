@@ -12,8 +12,9 @@ int p7_init(unsigned nthreads);
 #define p7_iowrap(_fn_, _rdwr_, _fd_, ...) \
 ({ \
     int fd_ = (_fd_), rdwr_ = (_rdwr_); \
+    __auto_type fn_ = (_fn_); \
     p7_iowrap_(fd_, rdwr_); \
-    _fn_(fd_, __VA_ARGS__); \
+    fn_(fd_, __VA_ARGS__); \
 })
 
 #define p7_io_notify(_fd_, _rdwr_) \
