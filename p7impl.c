@@ -503,6 +503,7 @@ void p7_timed_event_assoc(unsigned long long dt, void (*func)(void *), void *arg
     struct p7_timer_event *ev = p7_timer_event_new_(dt, self_view->carrier_id, self_view->sched_info.running, NULL);
     p7_timer_event_hook(ev, func, arg, dtor);
     timer_add_event(ev, self_view->sched_info.timer_heap);
+    // TODO implementation
 }
 
 void p7_coro_yield(void) {
