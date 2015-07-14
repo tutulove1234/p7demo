@@ -538,6 +538,7 @@ int p7_iowrap_(int fd, int rdwr) {
     k->fd = fd;
     (k->event.data.ptr = k), (k->event.events = EPOLLONESHOT);
     ((rdwr & P7_IOMODE_READ) && (k->event.events |= EPOLLIN)), ((rdwr & P7_IOMODE_WRITE) && (k->event.events |= EPOLLOUT));
+    (rdwr & P7_IOCTL_ET) && (k->event.events |= EPOLLERR);
     int ret;
     ret = epoll_ctl(self_view->iomon_info.epfd, EPOLL_CTL_ADD, fd, &(k->event));
     if (ret == -1) {

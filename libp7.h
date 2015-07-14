@@ -16,4 +16,9 @@ int p7_init(unsigned nthreads);
     _fn_(fd_, __VA_ARGS__); \
 })
 
+#define p7_io_notify(_fd_, _rdwr_) \
+do { \
+    p7_iowrap_(_fd_, _rdwr_); \
+} while (0)
+
 #endif      // _LIBP7_H_
