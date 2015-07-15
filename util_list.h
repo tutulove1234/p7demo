@@ -51,6 +51,10 @@ static inline int list_node_isolated(list_ctl_t *e) {
     return (e->next == NULL) || (e->prev == NULL);
 }
 
+static inline void list_node_isolate(list_ctl_t *e) {
+    e->prev = e->next = NULL;
+}
+
 static inline int list_is_empty(list_ctl_t *h) {
     return (h->next == h) && (h->prev == h);
 }

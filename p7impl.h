@@ -29,6 +29,7 @@ struct p7_coro {
         void (*entry)(void *);
     } func_info;
     unsigned carrier_id;
+    unsigned timedout;
     struct p7_coro_cntx *cntx;
 };
 

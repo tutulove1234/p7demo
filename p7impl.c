@@ -57,6 +57,7 @@ struct p7_coro *p7_coro_new_(void (*entry)(void *), void *arg, size_t stack_size
         if (coro != NULL) {
             (coro->carrier_id = carrier_id), (coro->cntx = cntx);
             (coro->func_info.entry = entry), (coro->func_info.arg = arg);
+            coro->timedout = 0;
         }
     }
     return coro;
@@ -400,8 +401,10 @@ void *sched_loop(void *arg) {
                 struct p7_timer_event *ev_timer_expired = timer_extract_earliest(self->sched_info.timer_heap);
                 if (ev_timer_expired->hook.func != NULL)
                     ev_timer_expired->hook.func(ev_timer_expired->hook.arg);
-                if (ev_timer_expired->coro != NULL)
+                if (ev_timer_expired->coro != NULL) {
+                    ev_timer_expired->coro->timedout = 1;
                     list_add_head(&(ev_timer_expired->coro->lctl), &(self->sched_info.coro_queue));
+                }
                 if (ev_timer_expired->condref != NULL) {
                     // TODO condref
                 }
@@ -416,7 +419,10 @@ void *sched_loop(void *arg) {
                 // XXX be it slower when active connections are many.
                 //     pray that we WILL hit and evade. @RHTS
                 if (epoll_ctl(self->iomon_info.epfd, EPOLL_CTL_DEL, kwrap->fd, NULL) != -1) {
-                    list_add_head(&(kwrap->coro->lctl), &(self->sched_info.coro_queue));
+                    if (kwrap->coro->timedout == 0)
+                        list_add_head(&(kwrap->coro->lctl), &(self->sched_info.coro_queue));
+                    else
+                        kwrap->coro->timedout = 0;
                     p7_waitk_delete(kwrap);
                 }
             } else {
@@ -499,11 +505,20 @@ void p7_timed_event(unsigned long long dt, void (*func)(void *), void *arg, void
     timer_add_event(ev, self_view->sched_info.timer_heap);
 }
 
-void p7_timed_event_assoc(unsigned long long dt, void (*func)(void *), void *arg, void (*dtor)(void *, void (*)(void *))) {
+struct p7_timer_event *p7_timed_event_assoc(unsigned long long dt, void (*func)(void *), void *arg, void (*dtor)(void *, void (*)(void *))) {
     struct p7_timer_event *ev = p7_timer_event_new_(dt, self_view->carrier_id, self_view->sched_info.running, NULL);
     p7_timer_event_hook(ev, func, arg, dtor);
     timer_add_event(ev, self_view->sched_info.timer_heap);
-    // TODO implementation
+    return ev;
+}
+
+unsigned p7_timedout_(void) {
+    return self_view->sched_info.running->timedout;
+}
+
+void p7_timer_clean_(struct p7_timer_event *ev) {
+    timer_remove_event(ev, self_view->sched_info.timer_heap);
+    p7_timer_event_del(ev);
 }
 
 void p7_coro_yield(void) {
