@@ -186,8 +186,6 @@ void p7_coro_rq_delete_(struct p7_coro_rq *rq) {
     free(rq);
 }
 
-// XXX Fierce?
-
 static
 struct p7_coro_rq *p7_coro_rq_new(void (*entry)(void *), void *arg, size_t stack_size) {
     pthread_rwlock_rdlock(&(self_view->sched_info.rq_pool_lock));
@@ -351,11 +349,9 @@ static volatile int sched_loop_sync = 0;
 
 // TODO conditional lock & timer
 //      * single conditional lock: map & queue
-//      * single timer: timer heap
 //      * timed conditional lock: a) on condition - remove the timer from RA timer heap
 //                                b) on timeout - remove the conditional lock
 //        always handle timeout events first. 
-// XXX however are timers meaningful... since there's no real time-sharing sched
 
 static
 void *sched_loop(void *arg) {
@@ -376,7 +372,6 @@ void *sched_loop(void *arg) {
     ++sched_loop_sync;
     while (sched_loop_sync < ncarriers);
 
-    // XXX he will go down he'll drown drown deeper down HOHOHO~HOTate
     while (1) {
         pthread_mutex_lock(&(self->sched_info.mutex));
         int ep_timeout = (list_is_empty(&(self->sched_info.coro_queue)) && list_is_empty(&(self->sched_info.rq_queues[0])) && list_is_empty(&(self->sched_info.rq_queues[1]))) ? -1 : 0;
@@ -419,7 +414,6 @@ void *sched_loop(void *arg) {
             struct p7_waitk *kwrap = (struct p7_waitk *) self->iomon_info.events[ep_itr].data.ptr;
             if (kwrap->fd != self->iomon_info.condpipe[0]) {
                 // XXX be it slower when active connections are many.
-                //     pray that we WILL hit and evade. @RHTS
                 if (epoll_ctl(self->iomon_info.epfd, EPOLL_CTL_DEL, kwrap->fd, NULL) != -1) {
                     if (kwrap->coro->timedout == 0)
                         list_add_head(&(kwrap->coro->lctl), &(self->sched_info.coro_queue));
@@ -433,8 +427,6 @@ void *sched_loop(void *arg) {
                 while (read(self->iomon_info.condpipe[0], &sink, 64) > 0);
             }
         }
-
-        // XXX ah admiral so fast <monotone />
 
         list_ctl_t *p, *t, *h;
         pthread_mutex_lock(&(self->sched_info.mutex));
@@ -549,8 +541,6 @@ void p7_coro_create(void (*entry)(void *), void *arg, size_t stack_size) {
 }
 
 int p7_iowrap_(int fd, int rdwr) {
-    // XXX we need an object pool as slices to get rid of these m(3) frags
-    //struct p7_waitk *k = (struct p7_waitk *) malloc(sizeof(struct p7_waitk)); // XXX m(3) frag
     struct p7_waitk *k = p7_waitk_new();
     if (k == NULL)
         return -1;
