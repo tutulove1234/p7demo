@@ -42,7 +42,7 @@ do { \
         ret_ = fn_(fd_, __VA_ARGS__); \
     } \
     p7_timeout_reset(); \
-    ret_; \
+    (volatile int) ret_; \
 })
 
 #endif      // _LIBP7_H_
