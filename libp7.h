@@ -9,6 +9,7 @@ void p7_timed_event(unsigned long long dt, void (*func)(void *), void *arg, void
 struct p7_timer_event *p7_timed_event_assoc(unsigned long long dt, void (*func)(void *), void *arg, void (*dtor)(void *, void (*)(void *)));
 int p7_iowrap_(int fd, int rdwr);
 unsigned p7_timedout_(void);
+unsigned p7_timeout_reset(void);
 void p7_timer_clean_(struct p7_timer_event *ev);
 int p7_init(unsigned nthreads);
 
@@ -40,6 +41,7 @@ do { \
         p7_timer_clean_(ev_); \
         ret_ = fn_(fd_, __VA_ARGS__); \
     } \
+    p7_timeout_reset(); \
     ret_; \
 })
 

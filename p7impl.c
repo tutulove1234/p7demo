@@ -516,6 +516,10 @@ unsigned p7_timedout_(void) {
     return self_view->sched_info.running->timedout;
 }
 
+unsigned p7_timeout_reset(void) {
+    self_view->sched_info.running->timedout = 0;
+}
+
 void p7_timer_clean_(struct p7_timer_event *ev) {
     timer_remove_event(ev, self_view->sched_info.timer_heap);
     p7_timer_event_del(ev);
