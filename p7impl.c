@@ -402,8 +402,10 @@ void *sched_loop(void *arg) {
                 if (ev_timer_expired->hook.func != NULL)
                     ev_timer_expired->hook.func(ev_timer_expired->hook.arg);
                 if (ev_timer_expired->coro != NULL) {
+                    __auto_type old_timedout = ev_timer_expired->coro->timedout;
                     ev_timer_expired->coro->timedout = 1;
-                    list_add_head(&(ev_timer_expired->coro->lctl), &(self->sched_info.coro_queue));
+                    if (old_timedout == 0)
+                        list_add_head(&(ev_timer_expired->coro->lctl), &(self->sched_info.coro_queue));
                 }
                 if (ev_timer_expired->condref != NULL) {
                     // TODO condref
