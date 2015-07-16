@@ -36,6 +36,7 @@ do { \
     int ret_; \
     if (p7_timedout_()) { \
         ret_ = -2; \
+        p7_timeout_reset(); \
     } \
     else { \
         p7_timer_clean_(ev_); \
