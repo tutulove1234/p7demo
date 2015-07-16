@@ -41,7 +41,6 @@ do { \
         p7_timer_clean_(ev_); \
         ret_ = fn_(fd_, __VA_ARGS__); \
     } \
-    p7_timeout_reset(); \
     (volatile int) ret_; \
 })
 
