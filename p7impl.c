@@ -18,8 +18,6 @@
     __atomic_add_fetch(&(_x_), 1, __ATOMIC_SEQ_CST); \
 })
 
-#include    <stdio.h>
-
 static int p7_timer_compare(const void *ev1, const void *ev2);
 
 static struct p7_carrier **carriers = NULL;
@@ -555,7 +553,6 @@ int p7_iowrap_(int fd, int rdwr) {
     ret = epoll_ctl(self_view->iomon_info.epfd, EPOLL_CTL_ADD, fd, &(k->event));
     if (ret == -1) {
         int errsv = errno;
-        perror("epoll");
         free(k);
         return -1;
     }
